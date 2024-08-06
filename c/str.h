@@ -1,75 +1,18 @@
 #ifndef STR_H
 #define STR_H
 
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define ASSERT_PTR(ptr) do {\
-    if ((ptr) == NULL) {\
-        return NULL;\
-    }\
-} while (0)
-
-#define ASSERT_PTR_RET_VAL(ptr, ret_val) do {\
-    if ((ptr) == NULL) {\
-        return (ret_val);\
-    }\
-} while (0)
-
-typedef struct line {
-    char* str;
-    size_t len, capacity; 
-} line_t; 
+#include "line.h"
 
 typedef struct file_content {
     line_t** lines; 
     size_t num_lines, capacity;
 } file_content_t; 
-
-line_t* init_line() {
-    line_t* line = malloc(sizeof(line_t)); 
-    ASSERT_PTR(line);
-    line->str = malloc(sizeof(char));
-    if (line->str == NULL) {
-        free(line); 
-        return NULL;
-    }
-    line->len = 0; 
-    line->capacity = 1; 
-    return line;
-}
-
-int line_alloc(line_t* line) {
-    bool alloc = false;
-    while (line->len >= line->capacity) {
-        line->capacity *= 2; 
-        alloc = true;
-    }
-    if (!alloc)
-        return 0;
-    char* sptr = malloc(sizeof(char) * line->capacity); 
-    ASSERT_PTR_RET_VAL(sptr, -1);
-    memcpy(sptr, line->str, sizeof(char) * line->len); 
-    free(line->str);
-    line->str = sptr; 
-    return 0; 
-}
-
-int line_append(line_t* line, char c) {
-    int err_code = line_alloc(line);
-    if (err_code != 0)
-        return err_code;
-    *(line->str + line->len) = c;
-    line->len++;
-    return 0;  
-}
-
-void line_free(line_t* line) {
-    free(line->str); 
-    free(line);
-}
 
 int content_init(file_content_t* file_content) {
     file_content->lines = malloc(sizeof(line_t*));
@@ -102,6 +45,7 @@ int content_append(file_content_t* file_content, line_t* line) {
     int err_code = content_alloc(file_content);
     if (err_code != 0)
         return err_code;
+    line->line_num = file_content->num_lines + 1;
     *(file_content->lines + file_content->num_lines) = line;
     file_content->num_lines++;
     return 0;
