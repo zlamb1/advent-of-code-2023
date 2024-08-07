@@ -26,7 +26,7 @@ int main(void) {
         }
         accum += sum;
     }
-    printf("accum: %i\n", accum);
+    printf("%i\n", accum);
     content_free(&file_content);
     return EXIT_SUCCESS;
 }
