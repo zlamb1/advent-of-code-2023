@@ -22,5 +22,4 @@ void print_file_read_code(FILE_READ_CODE_T err_code, const char* file_name) {
     }
 }
 
-
 #endif

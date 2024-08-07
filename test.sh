@@ -1,6 +1,6 @@
 langs=("c")
-days=(1)
-expected_results=(55208 54578)
+days=(1 2)
+expected_results=(55208 54578 2632 69629)
 
 for lang in ${langs[@]}; do
   cd "$PWD/$lang"
@@ -14,7 +14,10 @@ for lang in ${langs[@]}; do
             echo "test passed for $name: expected $expected"
         else
             echo "test failed for $name: expected $expected but got $out"
+            exit 1
         fi
     done
   done
 done
+
+exit 0
