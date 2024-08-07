@@ -94,7 +94,7 @@ STR_CMP_T line_const_cmp_str(line_t* line, const char* str) {
 }
 
 // matches any of the strings in the array to the string after line->pos
-// if it matches string it advances line->pos by said string's length
+// if it matches string it advances line->pos by the string's length
 // returns matched string's index or -1 if none are matched
 int line_cmp_str_arr(line_t* line, const char* arr[], size_t arr_len) {
     for (size_t i = 0; i < arr_len; i++) {
@@ -102,6 +102,14 @@ int line_cmp_str_arr(line_t* line, const char* arr[], size_t arr_len) {
             line->pos += strlen(arr[i]); 
             return i; 
         }
+    }
+    return -1;
+}
+
+int line_const_cmp_str_arr(line_t* line, const char* arr[], size_t arr_len) {
+    for (size_t i = 0; i < arr_len; i++) {
+        if (line_const_cmp_str(line, arr[i]) == STR_CMP_EQUAL)
+            return i; 
     }
     return -1;
 }

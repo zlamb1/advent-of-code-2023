@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "file_read_code.h"
 #include "line.h"
 
 typedef struct file_content {
@@ -75,41 +76,20 @@ line_t* read_line(FILE* fptr) {
     return line;
 }
 
-typedef enum FILE_READ_CODE {
-    SUCCESS     =  0,
-    INVALID_ARG = -1,
-    NO_FILE     = -2,
-    NO_MEMORY   = -3
-} FILE_READ_CODE_T;
-
 FILE_READ_CODE_T read_file(file_content_t* file_content, const char* file_name) {
-    ASSERT_PTR_RET_VAL(file_content, INVALID_ARG);
+    ASSERT_PTR_RET_VAL(file_content, FILE_READ_INVALID_ARG);
     FILE* fptr = fopen(file_name, "r"); 
-    ASSERT_PTR_RET_VAL(fptr, NO_FILE); 
+    ASSERT_PTR_RET_VAL(fptr, FILE_READ_NO_FILE); 
     int err_code = content_init(file_content);
     line_t* line;
     while ((line = read_line(fptr)) != NULL) {
-        ASSERT_PTR_RET_VAL(line, NO_MEMORY);
+        ASSERT_PTR_RET_VAL(line, FILE_READ_OUT_OF_MEMORY);
         int err_code = content_append(file_content, line);
         if (err_code != 0)
-            return NO_MEMORY;
+            return FILE_READ_OUT_OF_MEMORY;
     }
     fclose(fptr);
-    return SUCCESS;
-}
-
-void print_file_read_code(FILE_READ_CODE_T err_code, const char* file_name) {
-    switch (err_code) {
-        case INVALID_ARG:
-            fprintf(stderr, "invalid file content pointer\n");
-            break;
-        case NO_FILE:
-            fprintf(stderr, "could not open file %s\n", file_name);
-            break;
-        case NO_MEMORY:
-            fprintf(stderr, "could not allocate memory\n");
-            break;
-    }
+    return FILE_READ_SUCCESS;
 }
 
 #endif

@@ -5,7 +5,7 @@ static const char* file_name = "day1.txt";
 int main(void) {
     file_content_t file_content = {};
     int err_code = read_file(&file_content, file_name);
-    if (err_code != SUCCESS) {
+    if (err_code != FILE_READ_SUCCESS) {
         print_file_read_code(err_code, file_name);
         return EXIT_FAILURE;
     }

@@ -15,6 +15,4 @@
     }\
 } while (0)
 
-#define ASSERT_SPACE(line) ASSERT_STR_CMP(line, " ")
-
 #endif
