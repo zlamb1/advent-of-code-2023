@@ -30,7 +30,6 @@ static int parse_parts(str_buf_t* buf) {
                         int adjacent_index = i + adjacent_offsets[j]; 
                         if (adjacent_index > -1 && adjacent_index < buf->len) {
                             char adjacent_char = *(buf->data + adjacent_index);
-                            //printf("j[%li]: %c\n", j, adjacent_char);
                             if (adjacent_char != '.' && !is_numeric(adjacent_char)) {
                                 adjacent_to_symbol = true;
                                 break;
@@ -41,10 +40,7 @@ static int parse_parts(str_buf_t* buf) {
                 i++;
                 c = *(buf->data + i); 
             }
-            if (adjacent_to_symbol) {
-                printf("identified part: %i\n", part.num);
-                sum += part.num;
-            }
+            if (adjacent_to_symbol) sum += part.num;
         }
     }
     return sum; 
@@ -57,7 +53,7 @@ int main(void) {
         print_file_read_code(err_code, file_name);
         return EXIT_FAILURE; 
     }
-    printf("part number sum: %i\n", parse_parts(&buf));
+    printf("%i\n", parse_parts(&buf));
     str_buf_free(&buf); 
     return EXIT_SUCCESS;
 }

@@ -1,13 +1,18 @@
 langs=("c")
-days=(1 2)
-expected_results=(55208 54578 2632 69629)
+days=(1 2 3)
+expected_results=(
+  55208  54578 
+  2632   69629 
+  537832 81939900
+)
 
 for lang in ${langs[@]}; do
+  echo "testing $lang"
   cd "$PWD/$lang"
   for day in ${days[@]}; do
     index=$(((day - 1) * 2))
     for (( p = 1; p <= 2; p++ )); do
-        name="day$day"
+        name="day${day}_$p"
         out=$(eval "./test.sh $day $p")
         expected=${expected_results[$((index + p - 1))]}
         if [ "$out" = "$expected" ]; then
