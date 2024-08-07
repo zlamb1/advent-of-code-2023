@@ -1,9 +1,10 @@
 langs=("c")
-days=(1 2 3)
+days=(1 2 3 4)
 expected_results=(
   55208  54578 
   2632   69629 
   537832 81939900
+  23673 12263631
 )
 
 for lang in ${langs[@]}; do

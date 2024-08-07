@@ -2,6 +2,9 @@
 #define DYN_ARR_H
 
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /**
  * dynamic array implementation for ints
@@ -45,6 +48,14 @@ DYN_ARRAY_CODE_T dyn_arr_append(dyn_arr_t* dyn_arr, int i) {
     *(dyn_arr->data + dyn_arr->len) = i; 
     dyn_arr->len++;
     return DYN_ARRAY_SUCCESS; 
+}
+
+void dyn_arr_print(dyn_arr_t* dyn_arr) {
+    for (size_t i = 0; i < dyn_arr->len; i++) {
+        printf("%i", *(dyn_arr->data + i)); 
+        if (i != dyn_arr->len - 1)
+            printf(", ");
+    }
 }
 
 int dyn_arr_find(dyn_arr_t* dyn_arr, int s) {
