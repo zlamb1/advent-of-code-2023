@@ -14,9 +14,17 @@
 } while (0)
 
 #define ASSERT_STR_INT(line, i) do {\
-    INT_PARSE_T result = line_parse_int((line), (i));\
-    if (result != INT_PARSE_SUCCESS) {\
+    STR_PARSE_T result = line_parse_int((line), (i));\
+    if (result != STR_PARSE_SUCCESS) {\
         fprintf(stderr, "line %li: expected int: '%c'\n", line->line_num, line_get_pos_char(line));\
+        exit(EXIT_FAILURE);\
+    }\
+} while (0)
+
+#define ASSERT_STR_LONG(line, i) do {\
+    STR_PARSE_T result = line_parse_long((line), (i));\
+    if (result != STR_PARSE_SUCCESS) {\
+        fprintf(stderr, "line %li: expected long: '%c'\n", line->line_num, line_get_pos_char(line));\
         exit(EXIT_FAILURE);\
     }\
 } while (0)
@@ -114,10 +122,10 @@ int line_const_cmp_str_arr(line_t* line, const char* arr[], size_t arr_len) {
     return -1;
 }
 
-typedef enum INT_PARSE {
-    INT_PARSE_SUCCESS      =  0,
-    INT_PARSE_INVALID_CHAR = -1
-} INT_PARSE_T;
+typedef enum STR_PARSE {
+    STR_PARSE_SUCCESS      =  0,
+    STR_PARSE_INVALID_CHAR = -1
+} STR_PARSE_T;
 
 bool line_is_pos_char_numeric(line_t* line) {
     int num = *(line->str + line->pos) - '0';
@@ -128,18 +136,32 @@ int line_get_pos_char_as_int(line_t* line) {
     return *(line->str + line->pos) - '0';
 }
 
-INT_PARSE_T line_parse_int(line_t* line, int* out) {
+STR_PARSE_T line_parse_int(line_t* line, int* out) {
     int accum = 0;
     bool is_numeric = line_is_pos_char_numeric(line);
     if (!is_numeric)
-        return INT_PARSE_INVALID_CHAR;
+        return STR_PARSE_INVALID_CHAR;
     while (is_numeric) {
         accum = accum * 10 + line_get_pos_char_as_int(line); 
         line->pos++;
         is_numeric = line_is_pos_char_numeric(line);
     }
     *out = accum; 
-    return INT_PARSE_SUCCESS; 
+    return STR_PARSE_SUCCESS; 
+}
+
+STR_PARSE_T line_parse_long(line_t* line, long* out) {
+    long accum = 0;
+    bool is_numeric = line_is_pos_char_numeric(line);
+    if (!is_numeric)
+        return STR_PARSE_INVALID_CHAR;
+    while (is_numeric) {
+        accum = accum * 10L + (long)line_get_pos_char_as_int(line); 
+        line->pos++;
+        is_numeric = line_is_pos_char_numeric(line);
+    }
+    *out = accum; 
+    return STR_PARSE_SUCCESS; 
 }
 
 char line_get_pos_char(line_t* line) {
@@ -149,6 +171,11 @@ char line_get_pos_char(line_t* line) {
 void line_consume_char_seq(line_t* line, char c) {
     while (line->pos < line->len && *(line->str + line->pos) == c)
         line->pos++;
+}
+
+bool line_is_newline(line_t* line) {
+    char c = line_get_pos_char(line);
+    return line->len == 1 && (c == '\n' || c == '\0');
 }
 
 void line_free(line_t* line) {
