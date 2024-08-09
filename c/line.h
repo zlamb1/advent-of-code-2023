@@ -127,6 +127,10 @@ typedef enum STR_PARSE {
     STR_PARSE_INVALID_CHAR = -1
 } STR_PARSE_T;
 
+char line_get_pos_char(line_t* line) {
+    return *(line->str + line->pos);
+}
+
 bool line_is_pos_char_numeric(line_t* line) {
     int num = *(line->str + line->pos) - '0';
     return num > -1 && num < 10; 
@@ -150,6 +154,23 @@ STR_PARSE_T line_parse_int(line_t* line, int* out) {
     return STR_PARSE_SUCCESS; 
 }
 
+STR_PARSE_T line_parse_int_ignore_whitespace(line_t* line, int* out) {
+    int accum = 0;
+    bool is_numeric = line_is_pos_char_numeric(line);
+    bool is_whitespace = line_get_pos_char(line) == ' ';
+    if (!is_numeric)
+        return STR_PARSE_INVALID_CHAR;
+    while (is_numeric || is_whitespace) {
+        if (!is_whitespace)
+            accum = accum * 10 + line_get_pos_char_as_int(line); 
+        line->pos++;
+        is_numeric = line_is_pos_char_numeric(line);
+        is_whitespace = line_get_pos_char(line) == ' ';
+    }
+    *out = accum; 
+    return STR_PARSE_SUCCESS; 
+}
+
 STR_PARSE_T line_parse_long(line_t* line, long* out) {
     long accum = 0;
     bool is_numeric = line_is_pos_char_numeric(line);
@@ -164,8 +185,21 @@ STR_PARSE_T line_parse_long(line_t* line, long* out) {
     return STR_PARSE_SUCCESS; 
 }
 
-char line_get_pos_char(line_t* line) {
-    return *(line->str + line->pos);
+STR_PARSE_T line_parse_long_ignore_whitespace(line_t* line, long* out) {
+    long accum = 0;
+    bool is_numeric = line_is_pos_char_numeric(line);
+    bool is_whitespace = line_get_pos_char(line) == ' ';
+    if (!is_numeric)
+        return STR_PARSE_INVALID_CHAR;
+    while (is_numeric || is_whitespace) {
+        if (!is_whitespace)
+            accum = accum * 10 + line_get_pos_char_as_int(line); 
+        line->pos++;
+        is_numeric = line_is_pos_char_numeric(line);
+        is_whitespace = line_get_pos_char(line) == ' ';
+    }
+    *out = accum; 
+    return STR_PARSE_SUCCESS; 
 }
 
 void line_consume_char_seq(line_t* line, char c) {
