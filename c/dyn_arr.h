@@ -50,6 +50,22 @@ DYN_ARRAY_CODE_T dyn_arr_append(dyn_arr_t* dyn_arr, int i) {
     return DYN_ARRAY_SUCCESS; 
 }
 
+int dyn_arr_binary_search(dyn_arr_t* dyn_arr, int i) {
+    int low = 0, high = dyn_arr->len - 1;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        int search_val = *(dyn_arr->data + mid);
+        if (search_val < i) {
+            low = mid + 1;
+        } else if (search_val > i) {
+            high = mid - 1;
+        } else {
+            return mid;
+        }
+    }
+    return -(low + 1);
+}
+
 void dyn_arr_print(dyn_arr_t* dyn_arr) {
     for (size_t i = 0; i < dyn_arr->len; i++) {
         printf("%i", *(dyn_arr->data + i)); 
