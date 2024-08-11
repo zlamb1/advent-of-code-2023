@@ -5,7 +5,7 @@
 
 #include "../array.h"
 
-MAKE_ARRAY(int, int)
+MAKE_ARRAY(int)
 
 typedef struct part {
     int num; 

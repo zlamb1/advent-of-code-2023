@@ -4,7 +4,7 @@
 #include "../str.h"
 #include "almanac.h"
 
-MAKE_ARRAY(long, long)
+MAKE_ARRAY(long)
 
 static const char* file_name = "day5.txt";
 

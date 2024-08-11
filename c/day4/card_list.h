@@ -3,7 +3,7 @@
 
 #include "../array.h"
 
-MAKE_ARRAY(int, int)
+MAKE_ARRAY(int)
 
 typedef struct card {
     int id, index, score;

@@ -10,51 +10,121 @@
  * dynamic array implementation for ints
  */
 
-typedef enum DYN_ARRAY_CODE {
-    DYN_ARRAY_SUCCESS       =  0,
-    DYN_ARRAY_OUT_OF_MEMORY = -1
-} DYN_ARRAY_CODE_T;
+#ifndef ARRAY_INIT_SIZE
+#define ARRAY_INIT_SIZE 16
+#endif
 
-#define MAKE_ARRAY(name, type)                                         \
-typedef struct array {                                                 \
-    type* data;                                                        \
-    size_t len, capacity;                                              \
-} name##_array_t;                                                      \
-DYN_ARRAY_CODE_T name##_array_init(name##_array_t* array) {            \
-    array->data = malloc(sizeof(type));                                \
-    if (array->data == NULL)                                           \
-        return DYN_ARRAY_OUT_OF_MEMORY;                                \
-    array->len = 0;                                                    \
-    array->capacity = 1;                                               \
-    return DYN_ARRAY_SUCCESS;                                          \
-}                                                                      \
-DYN_ARRAY_CODE_T name##_array_alloc(name##_array_t* array) {           \
-    while (array->len >= array->capacity)                              \
-        array->capacity *= 2;                                          \
-    type* data = malloc(sizeof(type) * array->capacity);               \
-    if (data == NULL)                                                  \
-        return DYN_ARRAY_OUT_OF_MEMORY;                                \
-    memcpy(data, array->data, sizeof(type) * array->len);              \
-    free(array->data);                                                 \
-    array->data = data;                                                \
-    return DYN_ARRAY_SUCCESS;                                          \
-}                                                                      \
-DYN_ARRAY_CODE_T name##_array_append(name##_array_t* array, type el) { \
-    DYN_ARRAY_CODE_T result = name##_array_alloc(array);               \
-    if (result != DYN_ARRAY_SUCCESS)                                   \
-        return result;                                                 \
-    *(array->data + array->len) = el;                                  \
-    array->len++;                                                      \
-    return DYN_ARRAY_SUCCESS;                                          \
-}                                                                      \
-int name##_array_find(name##_array_t* array, type el) {                \
-    for (size_t i = 0; i < array->len; i++)                            \
-        if (*(array->data + i) == el)                                  \
-            return i;                                                  \
-    return -1;                                                         \
-}                                                                      \
-void name##_array_free(name##_array_t* array) {                        \
-    free(array->data);                                                 \
+#ifndef ARRAY_GROWTH_RATE
+#define ARRAY_GROWTH_RATE 1.5
+#endif
+
+typedef enum ARRAY_OP_RESULT {
+    ARRAY_OP_SUCCESS       =  0,
+    ARRAY_OP_OUT_OF_MEMORY = -1
+} ARRAY_OP_RESULT_T;
+
+#define GET_MACRO(_1, _2, NAME,...) NAME
+
+#define MAKE_ARRAY(...) GET_MACRO(__VA_ARGS__, MAKE_ARRAY2, MAKE_ARRAY1)(__VA_ARGS__)
+#define MAKE_ARRAY1(TYPE) MAKE_ARRAY2(TYPE, TYPE)
+#define MAKE_ARRAY2(NAME, TYPE)                                         \
+typedef struct NAME##_array {                                           \
+    TYPE* data;                                                         \
+    size_t len, capacity;                                               \
+} NAME##_array_t;                                                       \
+ARRAY_OP_RESULT_T NAME##_array_init(NAME##_array_t* array) {            \
+    array->data = malloc(sizeof(TYPE));                                 \
+    if (array->data == NULL)                                            \
+        return ARRAY_OP_OUT_OF_MEMORY;                                  \
+    array->len = 0;                                                     \
+    array->capacity = ARRAY_INIT_SIZE;                                  \
+    return ARRAY_OP_SUCCESS;                                            \
+}                                                                       \
+ARRAY_OP_RESULT_T NAME##_array_alloc(NAME##_array_t* array) {           \
+    while (array->len >= array->capacity)                               \
+        array->capacity *= ARRAY_GROWTH_RATE;                           \
+    TYPE* data = malloc(sizeof(TYPE) * array->capacity);                \
+    if (data == NULL)                                                   \
+        return ARRAY_OP_OUT_OF_MEMORY;                                  \
+    memcpy(data, array->data, sizeof(TYPE) * array->len);               \
+    free(array->data);                                                  \
+    array->data = data;                                                 \
+    return ARRAY_OP_SUCCESS;                                            \
+}                                                                       \
+ARRAY_OP_RESULT_T NAME##_array_append(NAME##_array_t* array, TYPE el) { \
+    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);               \
+    if (result != ARRAY_OP_SUCCESS)                                     \
+        return result;                                                  \
+    *(array->data + array->len) = el;                                   \
+    array->len++;                                                       \
+    return ARRAY_OP_SUCCESS;                                            \
+}                                                                       \
+int NAME##_array_find(NAME##_array_t* array, TYPE el) {                 \
+    for (size_t i = 0; i < array->len; i++)                             \
+        if (*(array->data + i) == el)                                   \
+            return i;                                                   \
+    return -1;                                                          \
+}                                                                       \
+void NAME##_array_free(NAME##_array_t* array) {                         \
+    free(array->data);                                                  \
 }                                                                
+
+#define FORMAT_SPECIFIER(T) _Generic((T),     \
+    char:          "%c\n",   char*:  "%s\n",  \
+    unsigned int:  "%u\n",   int:    "%i\n",  \
+    unsigned long: "%lu\n",  long:   "%ld\n", \
+    float:         "%f\n",   double: "%d\n",  \
+    default:       "%c\n"                     \
+)
+
+#define MAKE_ARRAY_WITH_PRINT(...) GET_MACRO(__VA_ARGS__, MAKE_ARRAY_WITH_PRINT2, MAKE_ARRAY_WITH_PRINT1)(__VA_ARGS__)
+#define MAKE_ARRAY_WITH_PRINT1(TYPE) MAKE_ARRAY_WITH_PRINT2(TYPE, TYPE)
+#define MAKE_ARRAY_WITH_PRINT2(NAME, TYPE)                              \
+typedef struct NAME##_array {                                           \
+    TYPE* data;                                                         \
+    size_t len, capacity;                                               \
+} NAME##_array_t;                                                       \
+ARRAY_OP_RESULT_T NAME##_array_init(NAME##_array_t* array) {            \
+    array->data = malloc(sizeof(TYPE));                                 \
+    if (array->data == NULL)                                            \
+        return ARRAY_OP_OUT_OF_MEMORY;                                  \
+    array->len = 0;                                                     \
+    array->capacity = ARRAY_INIT_SIZE;                                  \
+    return ARRAY_OP_SUCCESS;                                            \
+}                                                                       \
+ARRAY_OP_RESULT_T NAME##_array_alloc(NAME##_array_t* array) {           \
+    while (array->len >= array->capacity)                               \
+        array->capacity *= ARRAY_GROWTH_RATE;                           \
+    TYPE* data = malloc(sizeof(TYPE) * array->capacity);                \
+    if (data == NULL)                                                   \
+        return ARRAY_OP_OUT_OF_MEMORY;                                  \
+    memcpy(data, array->data, sizeof(TYPE) * array->len);               \
+    free(array->data);                                                  \
+    array->data = data;                                                 \
+    return ARRAY_OP_SUCCESS;                                            \
+}                                                                       \
+ARRAY_OP_RESULT_T NAME##_array_append(NAME##_array_t* array, TYPE el) { \
+    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);               \
+    if (result != ARRAY_OP_SUCCESS)                                     \
+        return result;                                                  \
+    *(array->data + array->len) = el;                                   \
+    array->len++;                                                       \
+    return ARRAY_OP_SUCCESS;                                            \
+}                                                                       \
+int NAME##_array_find(NAME##_array_t* array, TYPE el) {                 \
+    for (size_t i = 0; i < array->len; i++)                             \
+        if (*(array->data + i) == el)                                   \
+            return i;                                                   \
+    return -1;                                                          \
+}                                                                       \
+void NAME##_array_print(NAME##_array_t* array) {                        \
+    for (size_t i = 0; i < array->len; i++) {                           \
+        TYPE el = *(array->data + i);                                   \
+        printf(FORMAT_SPECIFIER(el), el);                               \
+    }                                                                   \
+}                                                                       \
+void NAME##_array_free(NAME##_array_t* array) {                         \
+    free(array->data);                                                  \
+}    
 
 #endif
