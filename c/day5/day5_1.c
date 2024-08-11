@@ -1,8 +1,10 @@
 #include <limits.h>
 
-#include "../l_dyn_arr.h"
+#include "../array.h"
 #include "../str.h"
 #include "almanac.h"
+
+MAKE_ARRAY(long, long)
 
 static const char* file_name = "day5.txt";
 
@@ -27,7 +29,7 @@ num_map_t* parse_map(file_content_t* file_content, size_t* index) {
     return map; 
 }
 
-long process_seeds(dyn_arr_t* seeds, almanac_t* almanac) {
+long process_seeds(long_array_t* seeds, almanac_t* almanac) {
     long min = LONG_MAX;
     for (size_t i = 0; i < seeds->len; i++) {
         long num = *(seeds->data + i); 
@@ -49,8 +51,8 @@ long process_seeds(dyn_arr_t* seeds, almanac_t* almanac) {
 }
 
 long parse_maps(file_content_t* file_content) {
-    dyn_arr_t seeds;
-    dyn_arr_init(&seeds);
+    long_array_t seeds;
+    long_array_init(&seeds);
     if (file_content->num_lines > 0) {
         line_t* line = *file_content->lines;
         ASSERT_STR_CMP(line, "seeds:");
@@ -59,13 +61,12 @@ long parse_maps(file_content_t* file_content) {
             CONSUME_WHITESPACE(line);
             long seed;
             ASSERT_STR_LONG(line, &seed);
-            dyn_arr_append(&seeds, seed);
+            long_array_append(&seeds, seed);
             c = line_get_pos_char(line);
         }
     }
     almanac_t almanac = {};
     almanac_init(&almanac);
-    size_t len = 0; 
     for (size_t i = 1; i < file_content->num_lines; i++) {
         line_t* line = *(file_content->lines + i); 
         if (line_is_newline(line))
@@ -77,7 +78,7 @@ long parse_maps(file_content_t* file_content) {
     }
     long min = process_seeds(&seeds, &almanac);
     almanac_free(&almanac);
-    dyn_arr_free(&seeds);
+    long_array_free(&seeds);
     return min;
 }
 

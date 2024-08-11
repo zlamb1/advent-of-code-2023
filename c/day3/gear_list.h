@@ -1,6 +1,9 @@
 #ifndef GEAR_LIST_H
 #define GEAR_LIST_H
 
+#include <stdlib.h>
+#include <string.h>
+
 typedef struct gear {
     int offset, ratio, adjacent_parts[2]; 
     size_t len; 

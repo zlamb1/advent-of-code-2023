@@ -19,7 +19,7 @@ static part_t* parse_part(str_buf_t* buf, int* i, int line_len) {
     char c = *(buf->data + *i); 
     // zero initialize struct
     part_t* part = calloc(1, sizeof(part_t));
-    dyn_arr_init(&part->adjacent_gears);
+    int_array_init(&part->adjacent_gears);
     while (is_numeric(c)) {
         part->num = part->num * 10 + (c - '0'); 
         for (size_t j = 0; j < 8; j++) {
@@ -27,8 +27,8 @@ static part_t* parse_part(str_buf_t* buf, int* i, int line_len) {
             if (adjacent_index > -1 && adjacent_index < buf->len) {
                 char adjacent_char = *(buf->data + adjacent_index);
                 if (adjacent_char == '*') {
-                    if (dyn_arr_find(&part->adjacent_gears, adjacent_index) < 0) {
-                        dyn_arr_append(&part->adjacent_gears, adjacent_index); 
+                    if (int_array_find(&part->adjacent_gears, adjacent_index) < 0) {
+                        int_array_append(&part->adjacent_gears, adjacent_index); 
                         part->adjacent_to_symbol = true;
                     }
                     break;

@@ -1,6 +1,5 @@
 #include <limits.h>
 
-#include "../l_dyn_arr.h"
 #include "../str.h"
 #include "almanac.h"
 
@@ -171,7 +170,6 @@ long parse_maps(file_content_t* file_content) {
     }
     almanac_t almanac = {};
     almanac_init(&almanac);
-    size_t len = 0; 
     for (size_t i = 1; i < file_content->num_lines; i++) {
         line_t* line = *(file_content->lines + i); 
         if (line_is_newline(line))

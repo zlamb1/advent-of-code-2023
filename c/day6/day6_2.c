@@ -36,7 +36,6 @@ int parse_races(file_content_t* file_content) {
     }
     for (size_t i = 0; i < race_list.len; i++) {
         race_t* race = race_list.races + i; 
-        double half_time = race->time / 2.0;
         double a = -1, b = race->time,  c = -race->distance; 
         double first = floor((-b - sqrt(pow(b, 2) - 4 * a * c)) / 2 * a), second = ceil((-b + sqrt(pow(b, 2) - 4 * a * c)) / 2 * a);
         product *= first - second + 1;

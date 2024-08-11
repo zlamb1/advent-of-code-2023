@@ -1,4 +1,3 @@
-#include "../dyn_arr.h"
 #include "../str.h"
 #include "card_list.h"
 
@@ -10,14 +9,14 @@ card_t parse_card(line_t* line) {
     CONSUME_WHITESPACE(line);
     ASSERT_STR_INT(line, &card.id); 
     ASSERT_STR_CMP(line, ":"); 
-    dyn_arr_init(&card.numbers);
-    dyn_arr_init(&card.winners); 
+    int_array_init(&card.numbers);
+    int_array_init(&card.winners); 
     CONSUME_WHITESPACE(line);
     char c = line_get_pos_char(line);
     while (c != '|') {
         int num;
         ASSERT_STR_INT(line, &num);
-        dyn_arr_append(&card.numbers, num);
+        int_array_append(&card.numbers, num);
         CONSUME_WHITESPACE(line);
         c = line_get_pos_char(line);
     }
@@ -27,7 +26,7 @@ card_t parse_card(line_t* line) {
         CONSUME_WHITESPACE(line);
         int num;
         ASSERT_STR_INT(line, &num);
-        dyn_arr_append(&card.winners, num);
+        int_array_append(&card.winners, num);
         c = line_get_pos_char(line);
     }
     return card; 
@@ -40,7 +39,7 @@ int parse_cards(file_content_t* file_content) {
         card_t card = parse_card(line);
         for (size_t i = 0; i < card.numbers.len; i++) {
             int num = *(card.numbers.data + i); 
-            if (dyn_arr_find(&card.winners, num) > -1) {
+            if (int_array_find(&card.winners, num) > -1) {
                 if (card.score == 0)
                     card.score = 1;
                 else card.score *= 2;

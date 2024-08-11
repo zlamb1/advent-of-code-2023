@@ -1,6 +1,9 @@
 #ifndef RACE_H
 #define RACE_H
 
+#include <stdlib.h>
+#include <string.h>
+
 typedef struct race {
     long time, distance;
 } race_t;

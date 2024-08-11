@@ -3,6 +3,8 @@
 
 #include <limits.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef enum hand_type {
     HIGH_CARD       = 0,
@@ -24,6 +26,8 @@ typedef struct hand_list {
     hand_t* hands;
     size_t len, capacity;
 } hand_list_t;
+
+int get_card_value(char c); 
 
 /**
  * returns true if the value of hand a is greater than b and false otherwise

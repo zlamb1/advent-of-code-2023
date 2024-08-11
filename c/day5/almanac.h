@@ -1,6 +1,10 @@
 #ifndef ALMANAC_H
 #define ALMANAC_H
 
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
 typedef struct seed_range {
     long start, end, map, range;
     bool matched;

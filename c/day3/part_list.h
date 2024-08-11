@@ -3,11 +3,13 @@
 
 #include <stdbool.h>
 
-#include "../dyn_arr.h"
+#include "../array.h"
+
+MAKE_ARRAY(int, int)
 
 typedef struct part {
     int num; 
-    dyn_arr_t adjacent_gears;
+    int_array_t adjacent_gears;
     bool adjacent_to_symbol;
 } part_t; 
 
@@ -40,7 +42,7 @@ void part_list_append(part_list_t* list, part_t* part) {
 void part_list_free(part_list_t* list) {
     for (size_t i = 0; i < list->len; i++) {
         part_t* part = *(list->parts + i);
-        dyn_arr_free(&part->adjacent_gears);
+        int_array_free(&part->adjacent_gears);
         free(part);
     }
     free(list->parts); 

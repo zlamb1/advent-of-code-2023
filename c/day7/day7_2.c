@@ -1,4 +1,3 @@
-#include "../dyn_arr.h"
 #include "../str.h"
 
 int get_card_value(char c) {

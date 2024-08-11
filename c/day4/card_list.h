@@ -1,9 +1,13 @@
 #ifndef CARD_LIST_H
 #define CARD_LIST_H
 
+#include "../array.h"
+
+MAKE_ARRAY(int, int)
+
 typedef struct card {
     int id, index, score;
-    dyn_arr_t numbers, winners;
+    int_array_t numbers, winners;
 } card_t;
 
 typedef struct card_list {
@@ -33,8 +37,8 @@ void card_list_append(card_list_t* list, card_t* card) {
 }
 
 void card_free(card_t* card) {
-    dyn_arr_free(&card->numbers);
-    dyn_arr_free(&card->winners);
+    int_array_free(&card->numbers);
+    int_array_free(&card->winners);
     free(card);
 }
 
