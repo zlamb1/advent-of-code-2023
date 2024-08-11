@@ -1,6 +1,8 @@
 #ifndef FILE_READ_CODE_H
 #define FILE_READ_CODE_H
 
+#include <stdio.h>
+
 typedef enum FILE_READ_CODE {
     FILE_READ_SUCCESS         =  0,
     FILE_READ_INVALID_ARG     = -1,
@@ -18,6 +20,8 @@ void print_file_read_code(FILE_READ_CODE_T err_code, const char* file_name) {
             break;
         case FILE_READ_OUT_OF_MEMORY:
             fprintf(stderr, "error: out of memory\n");
+            break;
+        default:
             break;
     }
 }
