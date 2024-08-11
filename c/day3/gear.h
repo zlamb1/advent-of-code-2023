@@ -12,7 +12,7 @@ typedef struct gear {
 
 MAKE_ARRAY(gear, gear_t)
 
-gear_t* gear_array_find_offset(gear_array_t* array, int offset) {
+gear_t* gear_array_find_by_offset(gear_array_t* array, int offset) {
     for (size_t i = 0; i < array->len; i++) {
         gear_t* gear = array->data + i;
         if (gear->offset == offset)

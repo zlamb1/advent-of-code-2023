@@ -105,8 +105,8 @@ hand_type_t get_hand_type(hand_t hand) {
 }
 
 int parse_cards(file_content_t* file_content) {
-    hand_list_t hand_list;
-    hand_list_init(&hand_list);
+    hand_array_t hand_array;
+    hand_array_init(&hand_array);
     for (size_t i = 0; i < file_content->num_lines; i++) {
         line_t* line = *(file_content->lines + i);
         hand_t hand = {0};
@@ -117,14 +117,14 @@ int parse_cards(file_content_t* file_content) {
         CONSUME_WHITESPACE(line);
         ASSERT_STR_LONG(line, &hand.bid);
         hand.type = get_hand_type(hand);
-        hand_list_insert(&hand_list, hand); 
+        hand_array_insert(&hand_array, hand); 
     }
     int total = 0;
-    for (size_t i = 0; i < hand_list.len; i++) {
-        hand_t hand = *(hand_list.hands + i); 
+    for (size_t i = 0; i < hand_array.len; i++) {
+        hand_t hand = *(hand_array.data + i); 
         total += hand.bid * (i + 1);
     }
-    hand_list_free(&hand_list);
+    hand_array_free(&hand_array);
     return total;
 }
 

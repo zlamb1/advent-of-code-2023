@@ -5,9 +5,9 @@
 
 static const char* file_name = "day5.txt";
 
-num_map_t* parse_map(file_content_t* file_content, size_t* index) {  
-    num_map_t* map = calloc(1, sizeof(num_map_t));
-    num_map_init(map);
+range_array_t* parse_map(file_content_t* file_content, size_t* index) {  
+    range_array_t* map = calloc(1, sizeof(range_array_t));
+    range_array_init(map);
     line_t* line = *(file_content->lines + *index);
     while (line_is_pos_char_numeric(line)) {
         range_t range = {};
@@ -17,7 +17,7 @@ num_map_t* parse_map(file_content_t* file_content, size_t* index) {
         CONSUME_WHITESPACE(line);
         ASSERT_STR_LONG(line, &range.len);
         CONSUME_WHITESPACE(line);
-        num_map_append(map, range);
+        range_array_append(map, range);
         (*index)++;
         if (*index < file_content->num_lines)
             line = *(file_content->lines + *index);
@@ -26,33 +26,33 @@ num_map_t* parse_map(file_content_t* file_content, size_t* index) {
     return map; 
 }
 
-long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
+long process_seeds(seed_array_t* seed_array, almanac_t* almanac) {
     long min = LONG_MAX;
-    while (seed_list->len > 0) {
-        seed_range_t seed_range = *(seed_list->ranges + seed_list->len - 1); 
-        seed_list->len--;
+    while (seed_array->len > 0) {
+        seed_range_t seed_range = *(seed_array->data + seed_array->len - 1); 
+        seed_array->len--;
         if (seed_range.map >= almanac->len) {
             if (min > seed_range.start)
                 min = seed_range.start;
             continue;
         }
-        num_map_t* num_map = *(almanac->maps + seed_range.map); 
+        range_array_t* num_map = *(almanac->maps + seed_range.map); 
         if (seed_range.range >= num_map->len) {
             if (!seed_range.matched) {
                 seed_range.map += 1;
                 seed_range.range = 0;
                 seed_range.matched = false;
-                seed_list_append(seed_list, seed_range);
+                seed_array_append(seed_array, seed_range);
             }
             continue;
         }
         for (size_t i = seed_range.range; i < num_map->len; i++) {
-            range_t num_range = *(num_map->ranges + i);
+            range_t num_range = *(num_map->data + i);
             long start = num_range.src, end = num_range.src + num_range.len - 1; 
             if (seed_range.start <= start && seed_range.end >= end) {
                 // seed_range encapsulates range
                 if (seed_range.start < start) {
-                    seed_list_append(seed_list, (seed_range_t){
+                    seed_array_append(seed_array, (seed_range_t){
                         .start   = seed_range.start,
                         .end     = start - 1,
                         .map     = seed_range.map,
@@ -60,12 +60,12 @@ long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
                         .matched = seed_range.matched
                     });
                 }
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start = num_range.dst,
                     .end   = num_range.dst + (end - start),
                     .map   = seed_range.map + 1
                 });
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start   = start,
                     .end     = end,
                     .map     = seed_range.map,
@@ -73,7 +73,7 @@ long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
                     .matched = true
                 });
                 if (seed_range.end > end) {
-                    seed_list_append(seed_list, (seed_range_t){
+                    seed_array_append(seed_array, (seed_range_t){
                         .start   = end + 1,
                         .end     = seed_range.end,
                         .map     = seed_range.map,
@@ -86,8 +86,8 @@ long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
                 // seed_range is encapsulated by range
                 seed_range.range = i + 1;
                 seed_range.matched = true;
-                seed_list_append(seed_list, seed_range);
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, seed_range);
+                seed_array_append(seed_array, (seed_range_t){
                     .start = num_range.dst + (seed_range.start - start),
                     .end   = num_range.dst + (seed_range.start - start) + (seed_range.end - seed_range.start),
                     .map   = seed_range.map + 1
@@ -95,21 +95,21 @@ long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
                 break;
             } else if (seed_range.start < start && seed_range.end >= start) {
                 // seed_range overlaps range from the left
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start   = seed_range.start,
                     .end     = start - 1,
                     .map     = seed_range.map,
                     .range   = i + 1,
                     .matched = seed_range.matched
                 });
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start   = start,
                     .end     = start + seed_range.end - start,
                     .map     = seed_range.map,
                     .range   = i + 1,
                     .matched = true
                 });
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start = num_range.dst,
                     .end   = num_range.dst + seed_range.end - start,
                     .map   = seed_range.map + 1
@@ -117,19 +117,19 @@ long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
                 break;
             } else if (seed_range.start <= end && seed_range.end > end) {
                 // seed_range overlaps range from the right
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start = num_range.dst + seed_range.start - start,
                     .end   = num_range.dst + end - start,
                     .map   = seed_range.map + 1
                 });
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start   = seed_range.start,
                     .end     = end,
                     .map     = seed_range.map,
                     .range   = i + 1,
                     .matched = true
                 });
-                seed_list_append(seed_list, (seed_range_t){
+                seed_array_append(seed_array, (seed_range_t){
                     .start   = end + 1,
                     .end     = seed_range.end,
                     .map     = seed_range.map,
@@ -142,7 +142,7 @@ long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
                 seed_range.map += 1;
                 seed_range.range = 0;
                 seed_range.matched = false;
-                seed_list_append(seed_list, seed_range);
+                seed_array_append(seed_array, seed_range);
                 break;
             }
         }
@@ -151,8 +151,8 @@ long process_seeds(seed_list_t* seed_list, almanac_t* almanac) {
 }
 
 long parse_maps(file_content_t* file_content) {
-    seed_list_t seed_list = {};
-    seed_list_init(&seed_list);
+    seed_array_t seed_array = {};
+    seed_array_init(&seed_array);
     if (file_content->num_lines > 0) {
         line_t* line = *file_content->lines;
         ASSERT_STR_CMP(line, "seeds:");
@@ -164,7 +164,7 @@ long parse_maps(file_content_t* file_content) {
             CONSUME_WHITESPACE(line);
             ASSERT_STR_LONG(line, &range.end);
             range.end = range.start + range.end - 1;
-            seed_list_append(&seed_list, range);
+            seed_array_append(&seed_array, range);
             c = line_get_pos_char(line);
         }
     }
@@ -175,13 +175,13 @@ long parse_maps(file_content_t* file_content) {
         if (line_is_newline(line))
             continue;
         if (line_is_pos_char_numeric(line)) {
-            num_map_t* map = parse_map(file_content, &i);
+            range_array_t* map = parse_map(file_content, &i);
             almanac_append(&almanac, map);
         }
     }
-    long min = process_seeds(&seed_list, &almanac);
+    long min = process_seeds(&seed_array, &almanac);
     almanac_free(&almanac);
-    seed_list_free(&seed_list);
+    seed_array_free(&seed_array);
     return min;
 }
 

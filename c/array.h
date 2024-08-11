@@ -45,6 +45,8 @@ __MAKE_ARITHMETIC_CMP_FN(float, float)
 __MAKE_ARITHMETIC_CMP_FN(double, double)
 __MAKE_ARITHMETIC_CMP_FN(void_ptr, void*)
 
+static int __str_cmp_fn(char* a, char* b) { return strcmp(a, b); }
+
 #define __CMP_FN(X) _Generic((X),        \
     unsigned char:  &__uchar_cmp_fn,     \
     char:           &__char_cmp_fn,      \
@@ -57,57 +59,72 @@ __MAKE_ARITHMETIC_CMP_FN(void_ptr, void*)
     float:          &__float_cmp_fn,     \
     double:         &__double_cmp_fn,    \
     void*:          &__void_ptr_cmp_fn,  \
+    char*:          &__str_cmp_fn,       \
     default:        NULL                 \
 )
+
+static void* __array_malloc(size_t size, void* ctx) {
+    return malloc(size);
+}
+
+static void __array_free(void* ptr, size_t size, void* ctx) {
+    free(ptr); 
+}
 
 #define GET_MACRO(_1, _2, NAME,...) NAME
 
 #define MAKE_ARRAY(...) GET_MACRO(__VA_ARGS__, MAKE_ARRAY2, MAKE_ARRAY1)(__VA_ARGS__)
 #define MAKE_ARRAY1(TYPE) MAKE_ARRAY2(TYPE, TYPE)
-#define MAKE_ARRAY2(NAME, TYPE)                                         \
-typedef struct NAME##_array {                                           \
-    TYPE* data;                                                         \
-    size_t len, capacity;                                               \
-    int (*cmp_fun)(TYPE a, TYPE b);                                     \
-} NAME##_array_t;                                                       \
-ARRAY_OP_RESULT_T NAME##_array_init(NAME##_array_t* array) {            \
-    array->data = malloc(sizeof(TYPE) * __ARRAY_INIT_SIZE);             \
-    if (array->data == NULL)                                            \
-        return ARRAY_OP_OUT_OF_MEMORY;                                  \
-    array->len = 0;                                                     \
-    array->capacity = __ARRAY_INIT_SIZE;                                \
-    TYPE t;                                                             \
-    array->cmp_fun = __CMP_FN(t);                                       \
-    return ARRAY_OP_SUCCESS;                                            \
-}                                                                       \
-ARRAY_OP_RESULT_T NAME##_array_alloc(NAME##_array_t* array) {           \
-    while (array->len >= array->capacity)                               \
-        array->capacity *= __ARRAY_GROWTH_RATE;                         \
-    TYPE* data = malloc(sizeof(TYPE) * array->capacity);                \
-    if (data == NULL)                                                   \
-        return ARRAY_OP_OUT_OF_MEMORY;                                  \
-    memcpy(data, array->data, sizeof(TYPE) * array->len);               \
-    free(array->data);                                                  \
-    array->data = data;                                                 \
-    return ARRAY_OP_SUCCESS;                                            \
-}                                                                       \
-ARRAY_OP_RESULT_T NAME##_array_append(NAME##_array_t* array, TYPE el) { \
-    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);               \
-    if (result != ARRAY_OP_SUCCESS)                                     \
-        return result;                                                  \
-    *(array->data + array->len) = el;                                   \
-    array->len++;                                                       \
-    return ARRAY_OP_SUCCESS;                                            \
-}                                                                       \
-int NAME##_array_find(NAME##_array_t* array, TYPE el) {                 \
-    if (array->cmp_fun == NULL) return -1;                              \
-    for (size_t i = 0; i < array->len; i++)                             \
-        if ((*array->cmp_fun)(*(array->data + i), el) == 0)             \
-            return i;                                                   \
-    return -1;                                                          \
-}                                                                       \
-void NAME##_array_free(NAME##_array_t* array) {                         \
-    free(array->data);                                                  \
+#define MAKE_ARRAY2(NAME, TYPE)                                            \
+typedef struct NAME##_array {                                              \
+    TYPE* data;                                                            \
+    size_t len, capacity;                                                  \
+    void *ctx;                                                             \
+    void* (*alloc)(size_t size, void* ctx);                                \
+    void (*free)(void* ptr, size_t size, void* ctx);                       \
+    int (*cmp_fun)(TYPE a, TYPE b);                                        \
+} NAME##_array_t;                                                          \
+ARRAY_OP_RESULT_T NAME##_array_init(NAME##_array_t* array) {               \
+    array->data = malloc(sizeof(TYPE) * __ARRAY_INIT_SIZE);                \
+    if (array->data == NULL)                                               \
+        return ARRAY_OP_OUT_OF_MEMORY;                                     \
+    array->len = 0;                                                        \
+    array->capacity = __ARRAY_INIT_SIZE;                                   \
+    array->alloc = &__array_malloc;                                        \
+    array->free  = &__array_free;                                          \
+    TYPE t;                                                                \
+    array->cmp_fun = __CMP_FN(t);                                          \
+    return ARRAY_OP_SUCCESS;                                               \
+}                                                                          \
+ARRAY_OP_RESULT_T NAME##_array_alloc(NAME##_array_t* array) {              \
+    while (array->len >= array->capacity)                                  \
+        array->capacity *= __ARRAY_GROWTH_RATE;                            \
+    TYPE* data = array->alloc(sizeof(TYPE) * array->capacity, array->ctx); \
+    if (data == NULL)                                                      \
+        return ARRAY_OP_OUT_OF_MEMORY;                                     \
+    size_t data_size = sizeof(TYPE) * array->len;                          \
+    memcpy(data, array->data, data_size);                                  \
+    array->free(array->data, data_size, array->ctx);                       \
+    array->data = data;                                                    \
+    return ARRAY_OP_SUCCESS;                                               \
+}                                                                          \
+ARRAY_OP_RESULT_T NAME##_array_append(NAME##_array_t* array, TYPE el) {    \
+    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);                  \
+    if (result != ARRAY_OP_SUCCESS)                                        \
+        return result;                                                     \
+    *(array->data + array->len) = el;                                      \
+    array->len++;                                                          \
+    return ARRAY_OP_SUCCESS;                                               \
+}                                                                          \
+int NAME##_array_find(NAME##_array_t* array, TYPE el) {                    \
+    if (array->cmp_fun == NULL) return -2;                                 \
+    for (size_t i = 0; i < array->len; i++)                                \
+        if (array->cmp_fun(*(array->data + i), el) == 0)                   \
+            return i;                                                      \
+    return -1;                                                             \
+}                                                                          \
+void NAME##_array_free(NAME##_array_t* array) {                            \
+    array->free(array->data, sizeof(TYPE) * array->capacity, array->ctx);  \
 }                                                                
 
 #define FORMAT_SPECIFIER(T) _Generic((T),     \

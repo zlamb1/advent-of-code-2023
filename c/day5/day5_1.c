@@ -8,9 +8,9 @@ MAKE_ARRAY(long)
 
 static const char* file_name = "day5.txt";
 
-num_map_t* parse_map(file_content_t* file_content, size_t* index) {  
-    num_map_t* map = calloc(1, sizeof(num_map_t));
-    num_map_init(map);
+range_array_t* parse_map(file_content_t* file_content, size_t* index) {  
+    range_array_t* map = calloc(1, sizeof(range_array_t));
+    range_array_init(map);
     line_t* line = *(file_content->lines + *index);
     while (line_is_pos_char_numeric(line)) {
         range_t range = {};
@@ -20,7 +20,7 @@ num_map_t* parse_map(file_content_t* file_content, size_t* index) {
         CONSUME_WHITESPACE(line);
         ASSERT_STR_LONG(line, &range.len);
         CONSUME_WHITESPACE(line);
-        num_map_append(map, range);
+        range_array_append(map, range);
         (*index)++;
         if (*index < file_content->num_lines)
             line = *(file_content->lines + *index);
@@ -34,9 +34,9 @@ long process_seeds(long_array_t* seeds, almanac_t* almanac) {
     for (size_t i = 0; i < seeds->len; i++) {
         long num = *(seeds->data + i); 
         for (size_t j = 0; j < almanac->len; j++) {
-            num_map_t* map = *(almanac->maps + j); 
+            range_array_t* map = *(almanac->maps + j); 
             for (size_t k = 0; k < map->len; k++) {
-                range_t range = *(map->ranges + k); 
+                range_t range = *(map->data + k); 
                 int mapping = num - range.src; 
                 if (mapping > -1 && mapping < range.len) {
                     num = range.dst + mapping;
@@ -72,7 +72,7 @@ long parse_maps(file_content_t* file_content) {
         if (line_is_newline(line))
             continue;
         if (line_is_pos_char_numeric(line)) {
-            num_map_t* map = parse_map(file_content, &i);
+            range_array_t* map = parse_map(file_content, &i);
             almanac_append(&almanac, map);
         }
     }

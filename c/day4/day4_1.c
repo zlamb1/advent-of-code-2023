@@ -1,5 +1,5 @@
 #include "../str.h"
-#include "card_list.h"
+#include "card.h"
 
 static const char* file_name = "day4.txt";
 

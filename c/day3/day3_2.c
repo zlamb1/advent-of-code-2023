@@ -72,7 +72,7 @@ int main(void) {
         part_t part = *(part_array->data + i); 
         for (size_t j = 0; j < part.adjacent_gears.len; j++) {
             int offset = *(part.adjacent_gears.data + j); 
-            gear_t* found = gear_array_find_offset(&gear_array, offset);
+            gear_t* found = gear_array_find_by_offset(&gear_array, offset);
             if (found == NULL) {
                 gear_t gear = {0};
                 gear.offset = offset;

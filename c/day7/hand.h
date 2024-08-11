@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../array.h"
+
 typedef enum hand_type {
     HIGH_CARD       = 0,
     ONE_PAIR        = 1,
@@ -22,10 +24,7 @@ typedef struct hand {
     long bid; 
 } hand_t;
 
-typedef struct hand_list {
-    hand_t* hands;
-    size_t len, capacity;
-} hand_list_t;
+MAKE_ARRAY(hand, hand_t)
 
 int get_card_value(char c); 
 
@@ -47,26 +46,11 @@ int compare_hands(hand_t a, hand_t b) {
     return 0;
 }
 
-void hand_list_init(hand_list_t* hand_list) {
-    hand_list->hands = malloc(sizeof(hand_t));
-    hand_list->len = 0;
-    hand_list->capacity = 1;
-}
-
-void hand_list_alloc(hand_list_t* hand_list) {
-    while (hand_list->len >= hand_list->capacity)
-        hand_list->capacity *= 2;
-    hand_t* hands = malloc(sizeof(hand_t) * hand_list->capacity);
-    memcpy(hands, hand_list->hands, sizeof(hand_t) * hand_list->len); 
-    free(hand_list->hands);
-    hand_list->hands = hands;
-}
-
-int hand_list_binary_search_reverse(hand_list_t* hand_list, hand_t hand, bool reverse) {
-    int low = 0, high = hand_list->len - 1, low_cmp = (reverse ? 1 : -1), high_cmp = (reverse ? -1 : 1);
+int hand_array_binary_search_reverse(hand_array_t* array, hand_t hand, bool reverse) {
+    int low = 0, high = array->len - 1, low_cmp = (reverse ? 1 : -1), high_cmp = (reverse ? -1 : 1);
     while (low <= high) {
         int mid = (low + high) / 2;
-        hand_t search_hand = *(hand_list->hands + mid);
+        hand_t search_hand = *(array->data + mid);
         int search_val = compare_hands(hand, search_hand);
         if (search_val == low_cmp) {
             low = mid + 1;
@@ -79,31 +63,31 @@ int hand_list_binary_search_reverse(hand_list_t* hand_list, hand_t hand, bool re
     return -(low + 1);
 }
 
-int hand_list_binary_search(hand_list_t* hand_list, hand_t hand) {
-    return hand_list_binary_search_reverse(hand_list, hand, false);
+int hand_array_binary_search(hand_array_t* array, hand_t hand) {
+    return hand_array_binary_search_reverse(array, hand, false);
 }
 
 /**
  * inserts hand into sorted array based on value using binary search
  */
-void hand_list_insert(hand_list_t* hand_list, hand_t hand) {
-    hand_list_alloc(hand_list); 
-    if (hand_list->len == 0) {
-        *hand_list->hands = hand; 
-        hand_list->len++;
+void hand_array_insert(hand_array_t* array, hand_t hand) {
+    hand_array_alloc(array); 
+    if (array->len == 0) {
+        *array->data = hand; 
+        array->len++;
     } else {
-        int index = hand_list_binary_search_reverse(hand_list, hand, true);
+        int index = hand_array_binary_search_reverse(array, hand, true);
         if (index < 0) index = -index - 1; 
-        if (index != hand_list->len) {
-            memmove(hand_list->hands + index + 1, hand_list->hands + index, sizeof(hand_t) * (hand_list->len - index));
+        if (index != array->len) {
+            memmove(array->data + index + 1, array->data + index, sizeof(hand_t) * (array->len - index));
         } 
-        *(hand_list->hands + index) = hand;
-        hand_list->len++;
+        *(array->data + index) = hand;
+        array->len++;
     }
 }
 
-void hand_list_free(hand_list_t* hand_list) {
-    free(hand_list->hands);
+void hand_list_free(hand_array_t* array) {
+    free(array->data);
 }
 
 #endif

@@ -1,22 +1,22 @@
 #include "../str.h"
-#include "card_list.h"
+#include "card.h"
 
 static const char* file_name = "day4.txt";
 
-card_t* parse_card(line_t* line) {
-    card_t* card = calloc(1, sizeof(card_t));
+card_t parse_card(line_t* line) {
+    card_t card = {0};
     ASSERT_STR_CMP(line, "Card");
     CONSUME_WHITESPACE(line);
-    ASSERT_STR_INT(line, &card->id); 
+    ASSERT_STR_INT(line, &card.id); 
     ASSERT_STR_CMP(line, ":"); 
-    int_array_init(&card->numbers);
-    int_array_init(&card->winners); 
+    int_array_init(&card.numbers);
+    int_array_init(&card.winners); 
     CONSUME_WHITESPACE(line);
     char c = line_get_pos_char(line);
     while (c != '|') {
         int num;
         ASSERT_STR_INT(line, &num);
-        int_array_append(&card->numbers, num);
+        int_array_append(&card.numbers, num);
         CONSUME_WHITESPACE(line);
         c = line_get_pos_char(line);
     }
@@ -26,13 +26,13 @@ card_t* parse_card(line_t* line) {
         CONSUME_WHITESPACE(line);
         int num;
         ASSERT_STR_INT(line, &num);
-        int_array_append(&card->winners, num);
+        int_array_append(&card.winners, num);
         c = line_get_pos_char(line);
     }
     return card; 
 }
 
-int calculate_count(card_list_t* card_list, card_t* card, int* copies) {
+int calculate_count(card_array_t* card_array, card_t* card, int* copies) {
     int copy = *(copies + card->index);
     if (copy > -1)
         return copy;
@@ -44,8 +44,8 @@ int calculate_count(card_list_t* card_list, card_t* card, int* copies) {
         }
     }
     while (win_count > 0) {
-        card_t* winner_card = *(card_list->cards + card->index + win_count);
-        card_count += calculate_count(card_list, winner_card, copies);
+        card_t* winner_card = card_array->data + card->index + win_count;
+        card_count += calculate_count(card_array, winner_card, copies);
         win_count--;
     }
     *(copies + card->index) = card_count;
@@ -53,21 +53,21 @@ int calculate_count(card_list_t* card_list, card_t* card, int* copies) {
 }
 
 int parse_cards(file_content_t* file_content) {
-    card_list_t card_list; 
-    card_list_init(&card_list); 
+    card_array_t card_array; 
+    card_array_init(&card_array); 
     for (size_t i = 0; i < file_content->num_lines; i++) {
         line_t* line = *(file_content->lines + i);
-        card_t* card = parse_card(line);
-        card->index = i; 
-        card_list_append(&card_list, card);
+        card_t card = parse_card(line);
+        card.index = i; 
+        card_array_append(&card_array, card);
     }
-    int* copies = malloc(sizeof(int) * card_list.len), count = 0; 
-    memset(copies, -1, sizeof(int) * card_list.len);
-    for (size_t i = card_list.len - 1; i < card_list.len; i--) {
-        card_t* card = *(card_list.cards + i); 
-        count += calculate_count(&card_list, card, copies);
+    int* copies = malloc(sizeof(int) * card_array.len), count = 0; 
+    memset(copies, -1, sizeof(int) * card_array.len);
+    for (size_t i = card_array.len - 1; i < card_array.len; i--) {
+        card_t* card = card_array.data + i; 
+        count += calculate_count(&card_array, card, copies);
     }
-    card_list_free(&card_list);
+    __card_array_free(&card_array);
     return count; 
 }
 
