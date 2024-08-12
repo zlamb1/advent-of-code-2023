@@ -1,9 +1,11 @@
 #ifndef FORMAT_H
 #define FORMAT_H
 
+#include <stdbool.h>
 #include <stdio.h>
 
-#define FORMAT_SPECIFIER(T, P) _Generic((T), \
+#define FORMAT_SPECIFIER(T, P) _Generic((T),     \
+    bool:          "%i"  P,                      \
     char:          "%c"  P, char*:  "%s"  P,     \
     unsigned int:  "%u"  P, int:    "%i"  P,     \
     unsigned long: "%lu" P, long:   "%ld" P,     \

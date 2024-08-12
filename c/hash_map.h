@@ -109,13 +109,13 @@ typedef struct NAME##_map {                                                     
 } NAME##_map_t;                                                                                             \
 static HASH_MAP_RESULT_T NAME##_map_init(NAME##_map_t* map) {                                               \
     map->num_entries = 0;                                                                                   \
-    map->capacity = __HASH_TABLE_INIT_CAPACITY;                                                             \
-    if (map->calloc_fn == NULL) map->calloc_fn = &__hash_map_calloc;                                        \
-    if (map->free_fn == NULL) map->free_fn     = &__hash_map_free;                                          \
+    map->capacity    = __HASH_TABLE_INIT_CAPACITY;                                                          \
+    map->calloc_fn   = &__hash_map_calloc;                                                                  \
+    map->free_fn     = &__hash_map_free;                                                                    \
     KEY_TYPE x;                                                                                             \
-    map->hash_fn = __HASH_FN(x);                                                                            \
-    map->key_cmp_fn = __CMP_FN(x);                                                                          \
-    map->entries = map->calloc_fn(__HASH_TABLE_INIT_CAPACITY, sizeof(NAME##_entry_t*));                     \
+    map->hash_fn     = __HASH_FN(x);                                                                        \
+    map->key_cmp_fn  = __CMP_FN(x);                                                                         \
+    map->entries     = map->calloc_fn(__HASH_TABLE_INIT_CAPACITY, sizeof(NAME##_entry_t*), map->alloc_ctx); \
     if (map->entries == NULL)                                                                               \
         return HASH_MAP_RESULT_OUT_OF_MEMORY;                                                               \
     return HASH_MAP_RESULT_SUCCESS;                                                                         \

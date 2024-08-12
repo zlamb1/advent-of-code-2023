@@ -1,7 +1,9 @@
 #include "../str.h"
 #include "node.h"
+#include <string.h>
 
 MAKE_ARRAY(dir, bool)
+MAKE_ARRAY(node, node_t)
 
 static const char* file_name = "day8.txt";
 
@@ -63,20 +65,54 @@ node_map_t parse_nodes(file_content_t* file_content) {
     return node_map; 
 }
 
+size_t gcf(size_t a, size_t b) {
+    if (b > a)
+        return gcf(b, a); 
+    size_t r = a % b;
+    if (r == 0) return b; 
+    return gcf(r, a);
+}
+
 size_t traverse_nodes(dir_array_t* dir_array, node_map_t* node_map) {
-    node_t node;
-    node_map_lookup(node_map, "AAA", &node); 
-    size_t counter = 0;
-    while (strcmp(node.name.data, "ZZZ") != 0) {
-        size_t instruction = counter % dir_array->len; 
-        if (dir_array->data[instruction]) {
-            node_map_lookup(node_map, node.paths[1].data, &node); 
-        } else {
-            node_map_lookup(node_map, node.paths[0].data, &node);
+    node_array_t nodes;
+    node_array_init(&nodes); 
+    for (size_t i = 0; i < node_map->capacity; i++) {
+        node_entry_t* entry = *(node_map->entries + i);
+        if (entry != NULL && !entry->tombstone) {
+            if (entry->key[2] == 'A') {
+                node_array_append(&nodes, entry->value); 
+            }
         }
-        counter++;
     }
-    return counter;
+    for (size_t i = 0; i < nodes.len; i++) {
+        node_t* node = nodes.data + i; 
+        node_t s_node = *node; 
+        size_t counter = 0; 
+        while (true) {
+            size_t instruction = counter % dir_array->len;
+            if (dir_array->data[instruction]) {
+                node_map_lookup(node_map, s_node.paths[1].data, &s_node); 
+            } else {
+                node_map_lookup(node_map, s_node.paths[0].data, &s_node);
+            }
+            counter++; 
+            if (s_node.name.data[2] == 'Z') {
+                node->steps = counter; 
+                break;
+            }
+        }
+    }
+    size_t lcm = 0;
+    for (size_t i = 1; i < nodes.len; i++) {
+        node_t* p_node = nodes.data + i - 1; 
+        node_t* node = nodes.data + i;
+        if (lcm == 0) {
+            lcm = node->steps / gcf(node->steps, p_node->steps) * p_node->steps;
+        } else {
+            lcm = lcm / gcf(lcm, node->steps) * node->steps;
+        }
+    }
+    return lcm;
 }
 
 int main(void) {

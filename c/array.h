@@ -45,6 +45,7 @@ static void __array_free(void* ptr, size_t size, void* ctx) {
 }
 
 #define __PRINT_FN(X, F) _Generic((X), \
+    bool:           &(F),              \
     unsigned char:  &(F),              \
     char:           &(F),              \
     signed char:    &(F),              \
