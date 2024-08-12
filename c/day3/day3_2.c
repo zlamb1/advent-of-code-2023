@@ -95,8 +95,5 @@ int main(void) {
         }
     }
     printf("%i\n", sum);
-    gear_array_free(&gear_array);
-    part_array_free(part_array);
-    str_buf_free(&buf); 
     return EXIT_SUCCESS;
 }
