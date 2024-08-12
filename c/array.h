@@ -1,9 +1,6 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#pragma clang diagnostic ignored "-Wformat-zero-length"
-#pragma GCC diagnostic ignored "-Wformat-zero-length"
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +8,9 @@
 
 #include "cmp.h"
 #include "format.h"
+
+#pragma clang diagnostic ignored "-Wformat-zero-length"
+#pragma GCC diagnostic ignored "-Wformat-zero-length"
 
 /**
  * dynamic array macro implementation
@@ -73,16 +73,18 @@ typedef struct NAME##_array {                                                   
     void (*free_fn)(void* ptr, size_t size, void* ctx);                                \
     int (*cmp_fn)(TYPE a, TYPE b);                                                     \
     void (*print_fn)(TYPE el);                                                         \
+    void (*destructor_fn)(TYPE el);                                                    \
 } NAME##_array_t;                                                                      \
 void __##NAME##_print_el(TYPE el);                                                     \
 void NAME##_array_zero_init(NAME##_array_t* array) {                                   \
-    array->len = 0;                                                                    \
-    array->capacity = __ARRAY_INIT_SIZE;                                               \
-    array->alloc_fn = &__array_malloc;                                                 \
-    array->free_fn  = &__array_free;                                                   \
+    array->len           = 0;                                                          \
+    array->capacity      = __ARRAY_INIT_SIZE;                                          \
+    array->alloc_fn      = &__array_malloc;                                            \
+    array->free_fn       = &__array_free;                                              \
     TYPE t;                                                                            \
-    array->print_fn = __PRINT_FN(t, __##NAME##_print_el);                              \
-    array->cmp_fn   = __CMP_FN(t);                                                     \
+    array->print_fn      = __PRINT_FN(t, __##NAME##_print_el);                         \
+    array->cmp_fn        = __CMP_FN(t);                                                \
+    array->destructor_fn = NULL;                                                       \
 }                                                                                      \
 ARRAY_OP_RESULT_T NAME##_array_alloc_init(NAME##_array_t* array) {                     \
     array->data = array->alloc_fn(sizeof(TYPE) * __ARRAY_INIT_SIZE, array->alloc_ctx); \
@@ -126,7 +128,7 @@ void __##NAME##_print_el(TYPE el) {                                             
 }                                                                                      \
 void NAME##_array_print(NAME##_array_t* array) {                                       \
     if (array->print_fn == NULL) {                                                     \
-        fprintf(stderr, "invalid print function ptr\n");                               \
+        fprintf(stderr, "invalid print function pointer\n");                           \
         return;                                                                        \
     }                                                                                  \
     printf("[");                                                                       \
@@ -137,6 +139,11 @@ void NAME##_array_print(NAME##_array_t* array) {                                
     printf("]\n");                                                                     \
 }                                                                                      \
 void NAME##_array_free(NAME##_array_t* array) {                                        \
+    if (array->destructor_fn != NULL) {                                                \
+        for (size_t i = 0; i < array->len; i++) {                                      \
+            array->destructor_fn(*(array->data + i));                                  \
+        }                                                                              \
+    }                                                                                  \
     array->free_fn(array->data, sizeof(TYPE) * array->capacity, array->alloc_ctx);     \
 }                                                                
 

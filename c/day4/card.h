@@ -12,15 +12,9 @@ typedef struct card {
 
 MAKE_ARRAY(card, card_t)
 
-void card_free(card_t* card) {
-    int_array_free(&card->numbers);
-    int_array_free(&card->winners);
-}
-
-void __card_array_free(card_array_t* array) {
-    for (size_t i = 0; i < array->len; i++)
-        card_free(array->data + i);
-    free(array->data); 
+void card_free(card_t card) {
+    int_array_free(&card.numbers);
+    int_array_free(&card.winners);
 }
 
 #endif

@@ -85,6 +85,5 @@ int main(void) {
             accum += game.id; 
     }
     printf("%i\n", accum);
-    content_free(&file_content);
     return EXIT_SUCCESS;
 }

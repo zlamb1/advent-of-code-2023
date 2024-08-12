@@ -55,6 +55,7 @@ int calculate_count(card_array_t* card_array, card_t* card, int* copies) {
 int parse_cards(file_content_t* file_content) {
     card_array_t card_array; 
     card_array_init(&card_array); 
+    card_array.destructor_fn = &card_free;
     for (size_t i = 0; i < file_content->num_lines; i++) {
         line_t* line = *(file_content->lines + i);
         card_t card = parse_card(line);
@@ -67,7 +68,7 @@ int parse_cards(file_content_t* file_content) {
         card_t* card = card_array.data + i; 
         count += calculate_count(&card_array, card, copies);
     }
-    __card_array_free(&card_array);
+    card_array_free(&card_array);
     return count; 
 }
 
@@ -80,6 +81,5 @@ int main(void) {
     }
     int sum = parse_cards(&file_content);
     printf("%i\n", sum);
-    content_free(&file_content);
     return EXIT_SUCCESS;
 }

@@ -80,6 +80,5 @@ int main(void) {
         accum += game.power; 
     }
     printf("%i\n", accum);
-    content_free(&file_content);
     return EXIT_SUCCESS;
 }

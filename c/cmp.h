@@ -32,7 +32,9 @@ static int __str_cmp_fn(char* a, char* b) { return strcmp(a, b); }
     float:          &__float_cmp_fn,     \
     double:         &__double_cmp_fn,    \
     void*:          &__void_ptr_cmp_fn,  \
+    unsigned char*: &__str_cmp_fn,       \
     char*:          &__str_cmp_fn,       \
+    signed char*:   &__str_cmp_fn,       \
     default:        NULL                 \
 )
 

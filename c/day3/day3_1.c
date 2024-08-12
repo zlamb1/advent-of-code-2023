@@ -54,6 +54,5 @@ int main(void) {
         return EXIT_FAILURE; 
     }
     printf("%i\n", parse_parts(&buf));
-    str_buf_free(&buf); 
     return EXIT_SUCCESS;
 }

@@ -91,6 +91,5 @@ int main(void) {
     }
     long min = parse_maps(&file_content);
     printf("%ld\n", min);
-    content_free(&file_content);
     return EXIT_SUCCESS;
 }

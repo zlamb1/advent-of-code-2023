@@ -59,6 +59,5 @@ int main(void) {
     }
     int sum = parse_cards(&file_content);
     printf("%i\n", sum);
-    content_free(&file_content);
     return EXIT_SUCCESS;
 }
