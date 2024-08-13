@@ -117,7 +117,7 @@ int parse_cards(file_content_t* file_content) {
         CONSUME_WHITESPACE(line);
         ASSERT_STR_LONG(line, &hand.bid);
         hand.type = get_hand_type(hand);
-        hand_array_insert(&hand_array, hand); 
+        hand_array_sorted_insert(&hand_array, hand); 
     }
     int total = 0;
     for (size_t i = 0; i < hand_array.len; i++) {

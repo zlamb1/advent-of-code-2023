@@ -3,14 +3,18 @@ name="day$1"
 cd "$dir/$name"
 
 run_test () {
-    gcc "$1" -lm
+    gcc "$1" -lm -g -Og
     if [ -f "./a.out" ]; then
-        ./a.out
+        if [ "$2" ]; then
+            valgrind --leak-check=full "./a.out"
+        else
+            ./a.out
+        fi
         rm ./a.out
     fi
 }
 
-if [[ $# -eq 2 ]]; then
+if [[ $# -gt 1 ]]; then
     if [[ $2 -lt 1 ]] || [[ $2 -gt 2 ]]; then
         echo "expected part 1 or 2"
         exit 1
@@ -18,7 +22,11 @@ if [[ $# -eq 2 ]]; then
     part="_$2"
     file_name="day$1$part.c"
     if [ -f "$file_name" ]; then
-        run_test $file_name
+        if [ "$3" == "-v" ]; then
+            run_test $file_name true
+        else 
+            run_test $file_name
+        fi
     else
         echo "could not locate $file_name"
     fi

@@ -70,7 +70,7 @@ int hand_array_binary_search(hand_array_t* array, hand_t hand) {
 /**
  * inserts hand into sorted array based on value using binary search
  */
-void hand_array_insert(hand_array_t* array, hand_t hand) {
+void hand_array_sorted_insert(hand_array_t* array, hand_t hand) {
     hand_array_alloc(array); 
     if (array->len == 0) {
         *array->data = hand; 

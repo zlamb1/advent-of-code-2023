@@ -1,9 +1,10 @@
 #ifndef LINE_H
 #define LINE_H
 
+#include <stdbool.h>
 #include <stdio.h>
-
-#include "macro.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define ASSERT_STR_CMP(line, str) do {\
     STR_CMP_T result = line_cmp_str((line), (str));\
@@ -38,7 +39,9 @@ typedef struct line {
 
 line_t* init_line() {
     line_t* line = malloc(sizeof(line_t)); 
-    ASSERT_PTR(line);
+    if (line == NULL) {
+        return NULL;
+    } 
     line->str = malloc(sizeof(char));
     if (line->str == NULL) {
         free(line); 
@@ -46,21 +49,21 @@ line_t* init_line() {
     }
     line->line_num = 0; 
     line->len      = 0; 
-    line->pos      = 0; 
+    line->pos      = 0;
     line->capacity = 1; 
     return line;
 }
 
 int line_alloc(line_t* line) {
-    bool alloc = false;
-    while (line->len >= line->capacity) {
+    size_t old_capacity = line->capacity; 
+    while (line->len >= line->capacity)
         line->capacity *= 2; 
-        alloc = true;
-    }
-    if (!alloc)
-        return 0;
+    if (line->capacity == old_capacity) return 0; 
     char* sptr = malloc(sizeof(char) * line->capacity); 
-    ASSERT_PTR_RET_VAL(sptr, -1);
+    if (sptr == NULL) {
+        line->capacity = old_capacity; 
+        return -1;
+    }
     memcpy(sptr, line->str, sizeof(char) * line->len); 
     free(line->str);
     line->str = sptr; 
@@ -68,9 +71,8 @@ int line_alloc(line_t* line) {
 }
 
 int line_append(line_t* line, char c) {
-    int err_code = line_alloc(line);
-    if (err_code != 0)
-        return err_code;
+    if (line_alloc(line) != 0)
+        return -1;
     *(line->str + line->len) = c;
     line->len++;
     return 0;  
@@ -141,16 +143,21 @@ int line_get_pos_char_as_int(line_t* line) {
 }
 
 STR_PARSE_T line_parse_int(line_t* line, int* out) {
-    int accum = 0;
+    int accum = 0, neg = 1;
     bool is_numeric = line_is_pos_char_numeric(line);
-    if (!is_numeric)
-        return STR_PARSE_INVALID_CHAR;
+    if (!is_numeric) {
+        if (line_get_pos_char(line) != '-')
+            return STR_PARSE_INVALID_CHAR;
+        line->pos++;
+        neg = -1; 
+        is_numeric = true; 
+    }
     while (is_numeric) {
         accum = accum * 10 + line_get_pos_char_as_int(line); 
         line->pos++;
         is_numeric = line_is_pos_char_numeric(line);
     }
-    *out = accum; 
+    *out = accum * neg; 
     return STR_PARSE_SUCCESS; 
 }
 
