@@ -47,6 +47,18 @@ int str_buf_append(str_buf_t* buf, char c) {
     return 0;
 }
 
+int str_buf_insert(str_buf_t* buf, char c, size_t index) {
+    if (index < 0 || index >= buf->len)
+        return -1;
+    int result = str_buf_alloc(buf);
+    if (result != 0)
+        return result;
+    memmove(buf->data + index + 1, buf->data + index, sizeof(char) * (buf->len - index));
+    *(buf->data + index) = c;
+    buf->len++;
+    return 0;
+}
+
 void str_buf_free(str_buf_t* buf) {
     free(buf->data); 
 }

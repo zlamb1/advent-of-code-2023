@@ -155,6 +155,7 @@ size_t parse_pipes(str_buf_t* buf) {
                     if (corner == 'F') inside = !inside;
                     break;
             }
+            free(p);
         }
         if ((i + 1) % buf->max_line_len == 0) {
             corner = '\0';
