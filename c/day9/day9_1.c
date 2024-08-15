@@ -40,16 +40,17 @@ size_t parse_seq(set_array_t* sets) {
         while (tree.len > 0) {
             bool all_zeroes = true;
             int_array_t set = *(tree.data + tree.len - 1);
+            set.iterator = 0; 
             int_array_t new_set;
             int_array_init(&new_set);
-            for (size_t i = 1; i < set.len; i++) {
-                int a = *(set.data + i - 1), b = *(set.data + i);
-                int_array_append(&new_set, b - a); 
-                if (b - a != 0)
-                    all_zeroes = false; 
+            while (int_array_has_next(&set)) {
+                int prev = *(set.data + set.iterator), next = int_array_next(&set), diff = next - prev;
+                int_array_append(&new_set, diff);
+                if (diff != 0) all_zeroes = false; 
             }
-            if (set.len == 1)
+            if (new_set.len == 0) {
                 int_array_append(&new_set, 0);
+            }
             set_array_append(&tree, new_set);
             if (all_zeroes)
                 break;

@@ -67,101 +67,124 @@ static void __array_free(void* ptr, size_t size, void* ctx) {
 
 #define MAKE_ARRAY(...) GET_MACRO(__VA_ARGS__, MAKE_ARRAY2, MAKE_ARRAY1)(__VA_ARGS__)
 #define MAKE_ARRAY1(TYPE) MAKE_ARRAY2(TYPE, TYPE)
-#define MAKE_ARRAY2(NAME, TYPE)                                                               \
-typedef struct NAME##_array {                                                                 \
-    TYPE* data;                                                                               \
-    size_t len, capacity;                                                                     \
-    void *alloc_ctx;                                                                          \
-    void* (*alloc_fn)(size_t size, void* ctx);                                                \
-    void (*free_fn)(void* ptr, size_t size, void* ctx);                                       \
-    int (*cmp_fn)(TYPE a, TYPE b);                                                            \
-    void (*print_fn)(TYPE el);                                                                \
-    void (*destructor_fn)(TYPE el);                                                           \
-} NAME##_array_t;                                                                             \
-void __##NAME##_print_el(TYPE el);                                                            \
-void NAME##_array_zero_init(NAME##_array_t* array) {                                          \
-    array->len           = 0;                                                                 \
-    array->capacity      = 0;                                                                 \
-    array->alloc_fn      = &__array_malloc;                                                   \
-    array->free_fn       = &__array_free;                                                     \
-    TYPE t;                                                                                   \
-    array->print_fn      = __PRINT_FN(t, __##NAME##_print_el);                                \
-    array->cmp_fn        = __CMP_FN(t);                                                       \
-    array->destructor_fn = NULL;                                                              \
-}                                                                                             \
-ARRAY_OP_RESULT_T NAME##_array_alloc_init(NAME##_array_t* array) {                            \
-    array->data = array->alloc_fn(sizeof(TYPE) * __ARRAY_INIT_SIZE, array->alloc_ctx);        \
-    if (array->data == NULL)                                                                  \
-        return ARRAY_OP_OUT_OF_MEMORY;                                                        \
-    array->len      = 0;                                                                      \
-    array->capacity = __ARRAY_INIT_SIZE;                                                      \
-    return ARRAY_OP_SUCCESS;                                                                  \
-}                                                                                             \
-void NAME##_array_init(NAME##_array_t* array) {                                               \
-    NAME##_array_zero_init(array);                                                            \
-    NAME##_array_alloc_init(array);                                                           \
-}                                                                                             \
-ARRAY_OP_RESULT_T NAME##_array_alloc(NAME##_array_t* array) {                                 \
-    size_t old_capacity = array->capacity;                                                    \
-    while (array->len >= array->capacity)                                                     \
-        array->capacity = ceil(array->capacity * __ARRAY_GROWTH_RATE);                        \
-    if (array->capacity == old_capacity) return ARRAY_OP_SUCCESS;                             \
-    TYPE* data = array->alloc_fn(sizeof(TYPE) * array->capacity, array->alloc_ctx);           \
-    if (data == NULL)                                                                         \
-        return ARRAY_OP_OUT_OF_MEMORY;                                                        \
-    size_t data_size = sizeof(TYPE) * array->len;                                             \
-    memcpy(data, array->data, data_size);                                                     \
-    array->free_fn(array->data, data_size, array->alloc_ctx);                                 \
-    array->data = data;                                                                       \
-    return ARRAY_OP_SUCCESS;                                                                  \
-}                                                                                             \
-ARRAY_OP_RESULT_T NAME##_array_append(NAME##_array_t* array, TYPE el) {                       \
-    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);                                     \
-    if (result != ARRAY_OP_SUCCESS)                                                           \
-        return result;                                                                        \
-    *(array->data + array->len) = el;                                                         \
-    array->len++;                                                                             \
-    return ARRAY_OP_SUCCESS;                                                                  \
-}                                                                                             \
-ARRAY_OP_RESULT_T NAME##_array_insert(NAME##_array_t* array, TYPE el, size_t index) {         \
-    if (index < 0 || index >= array->len)                                                     \
-        return ARRAY_OP_OUT_OF_BOUNDS;                                                        \
-    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);                                     \
-    if (result != ARRAY_OP_SUCCESS)                                                           \
-        return result;                                                                        \
+#define MAKE_ARRAY2(NAME, TYPE)                                                                 \
+typedef struct NAME##_array {                                                                   \
+    TYPE* data;                                                                                 \
+    size_t len, capacity;                                                                       \
+    long iterator;                                                                              \
+    void *alloc_ctx;                                                                            \
+    void* (*alloc_fn)(size_t size, void* ctx);                                                  \
+    void (*free_fn)(void* ptr, size_t size, void* ctx);                                         \
+    int (*cmp_fn)(TYPE a, TYPE b);                                                              \
+    void (*print_fn)(TYPE el);                                                                  \
+    void (*destructor_fn)(TYPE el);                                                             \
+} NAME##_array_t;                                                                               \
+void __##NAME##_print_el(TYPE el);                                                              \
+void NAME##_array_zero_init(NAME##_array_t* array) {                                            \
+    array->len           = 0;                                                                   \
+    array->capacity      = 0;                                                                   \
+    array->iterator      = -1;                                                                  \
+    array->alloc_fn      = &__array_malloc;                                                     \
+    array->free_fn       = &__array_free;                                                       \
+    TYPE t;                                                                                     \
+    array->print_fn      = __PRINT_FN(t, __##NAME##_print_el);                                  \
+    array->cmp_fn        = __CMP_FN(t);                                                         \
+    array->destructor_fn = NULL;                                                                \
+}                                                                                               \
+ARRAY_OP_RESULT_T NAME##_array_alloc_init(NAME##_array_t* array) {                              \
+    array->data = array->alloc_fn(sizeof(TYPE) * __ARRAY_INIT_SIZE, array->alloc_ctx);          \
+    if (array->data == NULL)                                                                    \
+        return ARRAY_OP_OUT_OF_MEMORY;                                                          \
+    array->len      = 0;                                                                        \
+    array->capacity = __ARRAY_INIT_SIZE;                                                        \
+    return ARRAY_OP_SUCCESS;                                                                    \
+}                                                                                               \
+void NAME##_array_init(NAME##_array_t* array) {                                                 \
+    NAME##_array_zero_init(array);                                                              \
+    NAME##_array_alloc_init(array);                                                             \
+}                                                                                               \
+ARRAY_OP_RESULT_T NAME##_array_alloc(NAME##_array_t* array) {                                   \
+    size_t old_capacity = array->capacity;                                                      \
+    while (array->len >= array->capacity)                                                       \
+        array->capacity = ceil(array->capacity * __ARRAY_GROWTH_RATE);                          \
+    if (array->capacity == old_capacity) return ARRAY_OP_SUCCESS;                               \
+    TYPE* data = array->alloc_fn(sizeof(TYPE) * array->capacity, array->alloc_ctx);             \
+    if (data == NULL)                                                                           \
+        return ARRAY_OP_OUT_OF_MEMORY;                                                          \
+    size_t data_size = sizeof(TYPE) * array->len;                                               \
+    memcpy(data, array->data, data_size);                                                       \
+    array->free_fn(array->data, data_size, array->alloc_ctx);                                   \
+    array->data = data;                                                                         \
+    return ARRAY_OP_SUCCESS;                                                                    \
+}                                                                                               \
+ARRAY_OP_RESULT_T NAME##_array_append(NAME##_array_t* array, TYPE el) {                         \
+    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);                                       \
+    if (result != ARRAY_OP_SUCCESS)                                                             \
+        return result;                                                                          \
+    *(array->data + array->len) = el;                                                           \
+    array->len++;                                                                               \
+    return ARRAY_OP_SUCCESS;                                                                    \
+}                                                                                               \
+ARRAY_OP_RESULT_T NAME##_array_insert(NAME##_array_t* array, TYPE el, size_t index) {           \
+    if (index < 0 || index >= array->len)                                                       \
+        return ARRAY_OP_OUT_OF_BOUNDS;                                                          \
+    ARRAY_OP_RESULT_T result = NAME##_array_alloc(array);                                       \
+    if (result != ARRAY_OP_SUCCESS)                                                             \
+        return result;                                                                          \
     memmove(array->data + index + 1, array->data + index, sizeof(TYPE) * (array->len - index)); \
-    *(array->data + index) = el;                                                              \
-    return ARRAY_OP_SUCCESS;                                                                  \
-}                                                                                             \
-int NAME##_array_find(NAME##_array_t* array, TYPE el) {                                       \
-    if (array->cmp_fn == NULL) return -2;                                                     \
-    for (size_t i = 0; i < array->len; i++)                                                   \
-        if (array->cmp_fn(*(array->data + i), el) == 0)                                       \
-            return i;                                                                         \
-    return -1;                                                                                \
-}                                                                                             \
-void __##NAME##_print_el(TYPE el) {                                                           \
-    printf(FORMAT_SPECIFIER(el, ""), el);                                                     \
-}                                                                                             \
-void NAME##_array_print(NAME##_array_t* array) {                                              \
-    if (array->print_fn == NULL) {                                                            \
-        fprintf(stderr, "invalid print function pointer\n");                                  \
-        return;                                                                               \
-    }                                                                                         \
-    printf("[");                                                                              \
-    for (size_t i = 0; i < array->len; i++) {                                                 \
-        array->print_fn(*(array->data + i));                                                  \
-        if (i < array->len - 1) printf(", ");                                                 \
-    }                                                                                         \
-    printf("]\n");                                                                            \
-}                                                                                             \
-void NAME##_array_free(NAME##_array_t* array) {                                               \
-    if (array->destructor_fn != NULL) {                                                       \
-        for (size_t i = 0; i < array->len; i++) {                                             \
-            array->destructor_fn(*(array->data + i));                                         \
-        }                                                                                     \
-    }                                                                                         \
-    array->free_fn(array->data, sizeof(TYPE) * array->capacity, array->alloc_ctx);            \
-}                                                                
+    *(array->data + index) = el;                                                                \
+    return ARRAY_OP_SUCCESS;                                                                    \
+}                                                                                               \
+int NAME##_array_find(NAME##_array_t* array, TYPE el) {                                         \
+    if (array->cmp_fn == NULL) return -2;                                                       \
+    for (size_t i = 0; i < array->len; i++)                                                     \
+        if (array->cmp_fn(*(array->data + i), el) == 0)                                         \
+            return i;                                                                           \
+    return -1;                                                                                  \
+}                                                                                               \
+void __##NAME##_print_el(TYPE el) {                                                             \
+    printf(FORMAT_SPECIFIER(el, ""), el);                                                       \
+}                                                                                               \
+void NAME##_array_print(NAME##_array_t* array) {                                                \
+    if (array->print_fn == NULL) {                                                              \
+        fprintf(stderr, "invalid print function pointer\n");                                    \
+        return;                                                                                 \
+    }                                                                                           \
+    printf("[");                                                                                \
+    for (size_t i = 0; i < array->len; i++) {                                                   \
+        array->print_fn(*(array->data + i));                                                    \
+        if (i < array->len - 1) printf(", ");                                                   \
+    }                                                                                           \
+    printf("]\n");                                                                              \
+}                                                                                               \
+size_t NAME##_array_count(NAME##_array_t* array) { return array->len; }                         \
+void NAME##_array_free(NAME##_array_t* array) {                                                 \
+    if (array->destructor_fn != NULL) {                                                         \
+        for (size_t i = 0; i < array->len; i++) {                                               \
+            array->destructor_fn(*(array->data + i));                                           \
+        }                                                                                       \
+    }                                                                                           \
+    array->free_fn(array->data, sizeof(TYPE) * array->capacity, array->alloc_ctx);              \
+}                                                                                               \
+bool NAME##_array_has_next(NAME##_array_t* array) {                                             \
+    if (array == NULL)                                                                          \
+        return false;                                                                           \
+    if (array->iterator < -1 || array->iterator >= array->len - 1)                              \
+        return false;                                                                           \
+    return true;                                                                                \
+}                                                                                               \
+bool NAME##_array_has_prev(NAME##_array_t* array) {                                             \
+    if (array == NULL)                                                                          \
+        return false;                                                                           \
+    if (array->iterator < 0 || array->iterator > array->len)                                    \
+        return false;                                                                           \
+    return true;                                                                                \
+}                                                                                               \
+TYPE NAME##_array_next(NAME##_array_t* array) {                                                 \
+    return *(array->data + ++array->iterator);                                                  \
+}                                                                                               \
+TYPE NAME##_array_prev(NAME##_array_t* array) {                                                 \
+    return *(array->data + --array->iterator);                                                  \
+}                                                             
 
 #endif

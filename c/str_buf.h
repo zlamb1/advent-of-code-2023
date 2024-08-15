@@ -1,6 +1,7 @@
 #ifndef STR_BUF_H
 #define STR_BUF_H
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "file_read_code.h"
